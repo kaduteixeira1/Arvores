@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 class NoRubroNegro:
     def __init__(self, chave, cor="vermelho"):
         self.chave = chave
-        self.cor = cor  # cor pode ser "vermelho" ou "preto"
+        self.cor = cor  # cor pode ser vermelho ou preto
         self.esquerda = None
         self.direita = None
         self.pai = None
@@ -11,8 +11,8 @@ class NoRubroNegro:
 class ArvoreRubroNegra:
     def __init__(self):
         self.raiz = None
-        self.NIL = NoRubroNegro(chave=None, cor="preto")  # Nó NIL (falso)
-        self.numeros_inseridos = []  # Lista para armazenar os números inseridos
+        self.NIL = NoRubroNegro(chave=None, cor="preto")  # nó NIL (falso)
+        self.numeros_inseridos = []  # armazenar os números inseridos
 
     def rotacao_esquerda(self, x):
         y = x.direita
@@ -242,6 +242,7 @@ class ArvoreRubroNegra:
         
         # Adiciona a posição atual
         if no != self.NIL:
+
             posicoes[no.chave] = (x, y)
             cor = "red" if no.cor == "vermelho" else "black"
             ax.scatter(x, y, s=300, color=cor)
@@ -256,19 +257,14 @@ class ArvoreRubroNegra:
                 ax.plot([x, x + gap_no / nivel], [y, y - gap_nivel], 'k-')
                 self.desenhar_arvore(no.direita, x + gap_no / nivel, y - gap_nivel, gap_nivel, gap_no, ax, nivel + 1, posicoes)
         
-        # Exibe o gráfico
+        # Exibe gráfico
         if ax:
             ax.axis("off")
             return
 
-# Exemplo de uso
 arvore_rubro_negra = ArvoreRubroNegra()
-# Inserindo alguns valores na árvore e exibindo a árvore após cada inserção
-valores = [20, 15, 25, 10, 5, 1, 30, 35, 40]
+
+valores = [63, 12, 89, 34, 58, 25, 3, 76, 47, 8, 91, 21, 65, 52, 27, 40, 54, 17, 33, 11, 90, 73, 50]
 for valor in valores:
     arvore_rubro_negra.inserir(valor)
 
-# Deletando alguns valores
-deletar_valores = [15, 10, 5]
-for valor in deletar_valores:
-    arvore_rubro_negra.remover(valor)
