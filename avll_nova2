@@ -1,0 +1,173 @@
+from matplotlib import pyplot as plt
+
+class No:
+    def __init__(self, chave):
+        self.chave = chave
+        self.esquerda = None
+        self.direita = None
+        self.altura = 1
+
+class ArvoreAVL:
+    def __init__(self):
+        self.raiz = None
+        self.houve_balanceamento = False  # Controle para indicar se houve balanceamento
+        self.numeros_inseridos = []  # Lista para armazenar os valores inseridos
+
+    def altura(self, no):
+        return no.altura if no else 0
+
+    def fator_balanceamento(self, no):
+        return self.altura(no.esquerda) - self.altura(no.direita) if no else 0
+
+    def rotacao_direita(self, y):
+        self.houve_balanceamento = True  # Indica que houve balanceamento
+        x = y.esquerda
+        T2 = x.direita
+        x.direita = y
+        y.esquerda = T2
+        y.altura = 1 + max(self.altura(y.esquerda), self.altura(y.direita))
+        x.altura = 1 + max(self.altura(x.esquerda), self.altura(x.direita))
+        return x
+
+    def rotacao_esquerda(self, x):
+        self.houve_balanceamento = True  # Indica que houve balanceamento
+        y = x.direita
+        T2 = y.esquerda
+        y.esquerda = x
+        x.direita = T2
+        x.altura = 1 + max(self.altura(x.esquerda), self.altura(x.direita))
+        y.altura = 1 + max(self.altura(y.esquerda), self.altura(y.direita))
+        return y
+
+    def balancear(self, no):
+        no.altura = 1 + max(self.altura(no.esquerda), self.altura(no.direita))
+        fator = self.fator_balanceamento(no)
+
+        # Rotação à direita
+        if fator > 1 and self.fator_balanceamento(no.esquerda) >= 0:
+            return self.rotacao_direita(no)
+
+        # Rotação à esquerda
+        if fator < -1 and self.fator_balanceamento(no.direita) <= 0:
+            return self.rotacao_esquerda(no)
+
+        # Rotação esquerda-direita
+        if fator > 1 and self.fator_balanceamento(no.esquerda) < 0:
+            no.esquerda = self.rotacao_esquerda(no.esquerda)
+            return self.rotacao_direita(no)
+
+        # Rotação direita-esquerda
+        if fator < -1 and self.fator_balanceamento(no.direita) > 0:
+            no.direita = self.rotacao_direita(no.direita)
+            return self.rotacao_esquerda(no)
+
+        return no
+
+    def inserir(self, raiz, chave):
+        if not raiz:
+            return No(chave)
+        elif chave < raiz.chave:
+            raiz.esquerda = self.inserir(raiz.esquerda, chave)
+        else:
+            raiz.direita = self.inserir(raiz.direita, chave)
+
+        # Balanceia o nó, se necessário
+        return self.balancear(raiz)
+
+    def adicionar(self, chave):
+        print(f"Adicionando nó: {chave}")
+        self.houve_balanceamento = False  # Reseta o indicador de balanceamento
+        self.raiz = self.inserir(self.raiz, chave)
+        self.numeros_inseridos.append(chave)  # Armazena o número inserido
+
+        # Mostra os números adicionados até o momento
+        print("Números adicionados:", self.numeros_inseridos)
+
+        # Mostra o gráfico após adicionar o nó
+        print(f"\nÁrvore após inserir {chave}:")
+        desenhar_arvore(self.raiz)  # Sempre chamar após a inserção
+        plt.show()  # Garantir que o gráfico seja exibido
+
+    def remover(self, raiz, chave):
+        if not raiz:
+            return raiz
+
+        # Encontra o nó a ser removido
+        if chave < raiz.chave:
+            raiz.esquerda = self.remover(raiz.esquerda, chave)
+        elif chave > raiz.chave:
+            raiz.direita = self.remover(raiz.direita, chave)
+        else:
+            # Caso 1: Nó com apenas um filho ou nenhum filho
+            if raiz.esquerda is None:
+                return raiz.direita
+            elif raiz.direita is None:
+                return raiz.esquerda
+
+            # Caso 2: Nó com dois filhos
+            # Encontra o menor valor na subárvore direita
+            raiz.chave = self.minimo(raiz.direita)
+
+            # Remove o nó que foi copiado
+            raiz.direita = self.remover(raiz.direita, raiz.chave)
+
+        # Balanceia a árvore após a remoção
+        return self.balancear(raiz)
+
+    def minimo(self, no):
+        current = no
+        while current.esquerda:
+            current = current.esquerda
+        return current.chave
+
+    def excluir(self, chave):
+        print(f"Removendo nó: {chave}")
+        self.houve_balanceamento = False  # Reseta o indicador de balanceamento
+        self.raiz = self.remover(self.raiz, chave)
+
+        # Mostra os números restantes após a remoção
+        self.numeros_inseridos.remove(chave)  # Remove o número da lista
+        print("Números restantes:", self.numeros_inseridos)
+
+        # Mostra o gráfico após remover o nó
+        print(f"\nÁrvore após remover {chave}:")
+        desenhar_arvore(self.raiz)  # Sempre chamar após a remoção
+        plt.show()  # Garantir que o gráfico seja exibido
+
+# Função para desenhar a árvore
+def desenhar_arvore(no, x=0, y=0, gap_nivel=1, gap_no=1, ax=None, nivel=1, posicoes=None):
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(12, 8))
+        posicoes = {}
+    
+    # Adiciona a posição atual
+    if no:
+        posicoes[no.chave] = (x, y)
+        ax.scatter(x, y, s=300, color="lightblue")
+        ax.text(x, y, str(no.chave), color="black", ha="center", va="center")
+        
+        # Desenha as conexões
+        if no.esquerda:
+            ax.plot([x, x - gap_no / nivel], [y, y - gap_nivel], 'k-')
+            desenhar_arvore(no.esquerda, x - gap_no / nivel, y - gap_nivel, gap_nivel, gap_no, ax, nivel + 1, posicoes)
+        
+        if no.direita:
+            ax.plot([x, x + gap_no / nivel], [y, y - gap_nivel], 'k-')
+            desenhar_arvore(no.direita, x + gap_no / nivel, y - gap_nivel, gap_nivel, gap_no, ax, nivel + 1, posicoes)
+    
+    # Exibe o gráfico
+    if ax:
+        ax.axis("off")
+        return
+    
+# Exemplo de uso
+arvore_avl = ArvoreAVL()
+# Novos valores para adicionar à árvore
+valores = [
+    15, 25, 35, 45, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100,
+    105, 130, 135, 150, 160, 170, 180, 190, 200, 210, 220
+]
+
+# Adicionando os valores à árvore
+for valor in valores:
+    arvore_avl.adicionar(valor)
