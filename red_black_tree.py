@@ -226,6 +226,10 @@ class RedBlackTree:
             positions = {}
 
         if node != self.TNULL:
+            # Verifica se o nó é uma folha (sem filhos)
+            if node.left == self.TNULL and node.right == self.TNULL:
+                node.color = "BLACK"  # Define a cor como preta, já que é uma folha
+
             # Define a posição do nó atual
             positions[node.key] = (x, y)
             ax.scatter(x, y, s=300, color="red" if node.color == "RED" else "black")
@@ -243,6 +247,7 @@ class RedBlackTree:
         if ax:
             ax.axis("off")
             return ax
+
 
 def main():
     rbt = RedBlackTree()
