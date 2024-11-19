@@ -1,0 +1,274 @@
+from matplotlib import pyplot as plt
+
+class NoRubroNegro:
+    def __init__(self, chave, cor="vermelho"):
+        self.chave = chave
+        self.cor = cor  # cor pode ser "vermelho" ou "preto"
+        self.esquerda = None
+        self.direita = None
+        self.pai = None
+
+class ArvoreRubroNegra:
+    def __init__(self):
+        self.raiz = None
+        self.NIL = NoRubroNegro(chave=None, cor="preto")  # Nó NIL (falso)
+        self.numeros_inseridos = []  # Lista para armazenar os números inseridos
+
+    def rotacao_esquerda(self, x):
+        y = x.direita
+        x.direita = y.esquerda
+        if y.esquerda != self.NIL:
+            y.esquerda.pai = x
+        y.pai = x.pai
+        if x.pai is None:
+            self.raiz = y
+        elif x == x.pai.esquerda:
+            x.pai.esquerda = y
+        else:
+            x.pai.direita = y
+        y.esquerda = x
+        x.pai = y
+
+    def rotacao_direita(self, y):
+        x = y.esquerda
+        y.esquerda = x.direita
+        if x.direita != self.NIL:
+            x.direita.pai = y
+        x.pai = y.pai
+        if y.pai is None:
+            self.raiz = x
+        elif y == y.pai.direita:
+            y.pai.direita = x
+        else:
+            y.pai.esquerda = x
+        x.direita = y
+        y.pai = x
+
+    def balancear(self, z):
+        while z.pai.cor == "vermelho":
+            if z.pai == z.pai.pai.esquerda:
+                y = z.pai.pai.direita
+                if y.cor == "vermelho":
+                    z.pai.cor = "preto"
+                    y.cor = "preto"
+                    z.pai.pai.cor = "vermelho"
+                    z = z.pai.pai
+                else:
+                    if z == z.pai.direita:
+                        z = z.pai
+                        self.rotacao_esquerda(z)
+                    z.pai.cor = "preto"
+                    z.pai.pai.cor = "vermelho"
+                    self.rotacao_direita(z.pai.pai)
+            else:
+                y = z.pai.pai.esquerda
+                if y.cor == "vermelho":
+                    z.pai.cor = "preto"
+                    y.cor = "preto"
+                    z.pai.pai.cor = "vermelho"
+                    z = z.pai.pai
+                else:
+                    if z == z.pai.esquerda:
+                        z = z.pai
+                        self.rotacao_direita(z)
+                    z.pai.cor = "preto"
+                    z.pai.pai.cor = "vermelho"
+                    self.rotacao_esquerda(z.pai.pai)
+            if z == self.raiz:
+                break
+        self.raiz.cor = "preto"
+
+    def inserir(self, chave):
+        novo_no = NoRubroNegro(chave)
+        novo_no.esquerda = self.NIL
+        novo_no.direita = self.NIL
+        novo_no.pai = None
+
+        # Caso a árvore esteja vazia, inicializa a raiz
+        if self.raiz is None:
+            self.raiz = novo_no
+            novo_no.cor = "preto"
+            self.numeros_inseridos.append(chave)  # Armazena o número inserido
+            print(f"Adicionando nó: {chave}")
+            print("Números adicionados até agora:", self.numeros_inseridos)
+            self.desenhar_arvore(self.raiz)  # Plotar após inserção
+            plt.show()
+            return
+
+        y = None
+        x = self.raiz
+
+        while x != self.NIL:
+            y = x
+            if novo_no.chave < x.chave:
+                x = x.esquerda
+            else:
+                x = x.direita
+
+        novo_no.pai = y
+        if y is None:
+            self.raiz = novo_no
+        elif novo_no.chave < y.chave:
+            y.esquerda = novo_no
+        else:
+            y.direita = novo_no
+
+        novo_no.cor = "vermelho"
+        self.balancear(novo_no)
+
+        # Atualiza a lista de números inseridos e imprime
+        self.numeros_inseridos.append(chave)
+        print(f"Adicionando nó: {chave}")
+        print("Números adicionados até agora:", self.numeros_inseridos)
+
+        # Plotar após a inserção e balanceamento
+        self.desenhar_arvore(self.raiz)
+        plt.show()
+
+    def remover(self, chave):
+        no = self.raiz
+        while no != self.NIL:
+            if chave < no.chave:
+                no = no.esquerda
+            elif chave > no.chave:
+                no = no.direita
+            else:
+                break
+
+        if no == self.NIL:
+            print(f"Nó com valor {chave} não encontrado.")
+            return
+
+        y = no
+        y_original_cor = y.cor
+        if no.esquerda == self.NIL:
+            x = no.direita
+            self.transplantar(no, no.direita)
+        elif no.direita == self.NIL:
+            x = no.esquerda
+            self.transplantar(no, no.esquerda)
+        else:
+            y = self.minimo(no.direita)
+            y_original_cor = y.cor
+            x = y.direita
+            if y.pai == no:
+                x.pai = y
+            else:
+                self.transplantar(y, y.direita)
+                y.direita = no.direita
+                y.direita.pai = y
+            self.transplantar(no, y)
+            y.esquerda = no.esquerda
+            y.esquerda.pai = y
+            y.cor = no.cor
+
+        if y_original_cor == "preto":
+            self.balancear_delecao(x)
+
+        # Atualiza a lista de números inseridos e imprime
+        if chave in self.numeros_inseridos:
+            self.numeros_inseridos.remove(chave)
+        print(f"Removendo nó: {chave}")
+        print("Números restantes:", self.numeros_inseridos)
+
+        # Plotar após a remoção e balanceamento
+        self.desenhar_arvore(self.raiz)
+        plt.show()
+
+    def transplantar(self, u, v):
+        if u.pai is None:
+            self.raiz = v
+        elif u == u.pai.esquerda:
+            u.pai.esquerda = v
+        else:
+            u.pai.direita = v
+        v.pai = u.pai
+
+    def minimo(self, no):
+        while no.esquerda != self.NIL:
+            no = no.esquerda
+        return no
+
+    def balancear_delecao(self, x):
+        while x != self.raiz and x.cor == "preto":
+            if x == x.pai.esquerda:
+                w = x.pai.direita
+                if w.cor == "vermelho":
+                    w.cor = "preto"
+                    x.pai.cor = "vermelho"
+                    self.rotacao_esquerda(x.pai)
+                    w = x.pai.direita
+                if w.esquerda.cor == "preto" and w.direita.cor == "preto":
+                    w.cor = "vermelho"
+                    x = x.pai
+                else:
+                    if w.direita.cor == "preto":
+                        w.esquerda.cor = "preto"
+                        w.cor = "vermelho"
+                        self.rotacao_direita(w)
+                        w = x.pai.direita
+                    w.cor = x.pai.cor
+                    x.pai.cor = "preto"
+                    w.direita.cor = "preto"
+                    self.rotacao_esquerda(x.pai)
+                    x = self.raiz
+            else:
+                w = x.pai.esquerda
+                if w.cor == "vermelho":
+                    w.cor = "preto"
+                    x.pai.cor = "vermelho"
+                    self.rotacao_direita(x.pai)
+                    w = x.pai.esquerda
+                if w.direita.cor == "preto" and w.esquerda.cor == "preto":
+                    w.cor = "vermelho"
+                    x = x.pai
+                else:
+                    if w.esquerda.cor == "preto":
+                        w.direita.cor = "preto"
+                        w.cor = "vermelho"
+                        self.rotacao_esquerda(w)
+                        w = x.pai.esquerda
+                    w.cor = x.pai.cor
+                    x.pai.cor = "preto"
+                    w.esquerda.cor = "preto"
+                    self.rotacao_direita(x.pai)
+                    x = self.raiz
+        x.cor = "preto"
+
+    def desenhar_arvore(self, no, x=0, y=0, gap_nivel=1, gap_no=1, ax=None, nivel=1, posicoes=None):
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(12, 8))
+            posicoes = {}
+        
+        # Adiciona a posição atual
+        if no != self.NIL:
+            posicoes[no.chave] = (x, y)
+            cor = "red" if no.cor == "vermelho" else "black"
+            ax.scatter(x, y, s=300, color=cor)
+            ax.text(x, y, str(no.chave), color="white", ha="center", va="center")
+            
+            # Desenha as conexões
+            if no.esquerda != self.NIL:
+                ax.plot([x, x - gap_no / nivel], [y, y - gap_nivel], 'k-')
+                self.desenhar_arvore(no.esquerda, x - gap_no / nivel, y - gap_nivel, gap_nivel, gap_no, ax, nivel + 1, posicoes)
+            
+            if no.direita != self.NIL:
+                ax.plot([x, x + gap_no / nivel], [y, y - gap_nivel], 'k-')
+                self.desenhar_arvore(no.direita, x + gap_no / nivel, y - gap_nivel, gap_nivel, gap_no, ax, nivel + 1, posicoes)
+        
+        # Exibe o gráfico
+        if ax:
+            ax.axis("off")
+            return
+
+# Exemplo de uso
+arvore_rubro_negra = ArvoreRubroNegra()
+# Inserindo alguns valores na árvore e exibindo a árvore após cada inserção
+valores = [20, 15, 25, 10, 5, 1, 30, 35, 40]
+for valor in valores:
+    arvore_rubro_negra.inserir(valor)
+
+# Deletando alguns valores
+deletar_valores = [15, 10, 5]
+for valor in deletar_valores:
+    arvore_rubro_negra.remover(valor)
